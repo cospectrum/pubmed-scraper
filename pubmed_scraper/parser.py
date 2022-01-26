@@ -37,15 +37,32 @@ def parse_total_pages(table_head: Optional[Tag]) -> int:
 
 
 def parse_article_row(article: Tag) -> dict:
-    article_content = article.find('div', {'class': 'docsum-content'})
-    if article_content is None:
-        return dict()
-    title_tag = article_content.find('a', {'class': 'docsum-title'})
-    if title_tag is None:
+    article_tag = article.find('div', {'class': 'docsum-content'})
+    if article_tag is None:
         return dict()
     article_data = dict()
+    title_tag = article_tag.find('a', {'class': 'docsum-title'})
+    if title_tag is None:
+        return article_data
     article_data['pmid'] = title_tag.get('href', '').replace('/', '')
-    article_data['text'] = title_tag.text.strip()
+    article_data['title'] = title_tag.text.strip()
+    
+    snippet = article_tag.find('div', {'full-view-snippet'})
+    if snippet is not None:
+        article_data['snippet'] = ' '.join(
+            child.text.strip() for child in snippet.children
+        ).lstrip()
+    
+    citation: Optional[Tag] = article_tag.find(
+        'div', {'class': ['docsum-citation', 'full-citation']}
+    )
+    if citation is None:
+        return article_data
+    authors_tag = citation.find(
+        'span', {'class': ['docsum-authors', 'full-authors']}
+    )
+    if authors_tag is not None:
+        article_data['authors'] = authors_tag.text.strip()
     return article_data
 
 
@@ -56,8 +73,9 @@ def parse_search_page(html: str) -> dict:
         'articles': [],
     }
     soup = BeautifulSoup(html, 'html.parser')
-    search_results = soup.find('div', {'id': 'search-results'})
-
+    search_results: Optional[Tag] = soup.find('div', {'id': 'search-results'})
+    if search_results is None:
+        return dict()
     table_head = search_results.find('div', {'class': 'top-wrapper'})
     data['results-amount']: int = parse_results_amount(table_head)
     data['total-pages']: int = parse_total_pages(table_head)
@@ -149,23 +167,27 @@ def parse_references(tag: Optional[Tag]) -> list:
         return []
     references = tag.find_all('li', {'class': 'skip-numbering'})
     def parse_text(tag: Tag) -> str:
-        right_text = ''
-        if tag.a is not None:
-            right_text = tag.a.text.strip()
-        text = list(tag.children)[0].text.strip()
+        children = tag.children
+        try:
+            text = next(children).text.strip()
+        except StopIteration:
+            return ''
+        right_text = ' '.join(tag.text.strip() for tag in children)
         rindex = text.rfind('-')
         if rindex != -1:
-            chars = list(text)
-            text = ''.join(chars[:rindex]).strip() + '-' + ''.join(chars[rindex + 1:])
-        return text + right_text
-    def parse_href(tag: Tag) -> str:
-        if tag.a is None: 
-            return ''
-        return tag.a.get('href', '')
+            chars = tuple(text)
+            left_chars = ''.join(chars[:rindex]).rstrip()
+            right_chars = ''.join(chars[rindex + 1:])
+            text = f'{left_chars} -{right_chars}'
+        return f'{text} {right_text}'.rstrip()
+    def parse_href(tag: Tag) -> list:
+        all_links = tag.find_all('a')
+        links = [link.get('href', '') for link in all_links]
+        return links
     data = [
         {
             'note': parse_text(reference),
-            'url': parse_href(reference)
+            'links': parse_href(reference)
         }
         for reference in references
     ]
@@ -254,3 +276,5 @@ def parse_article_page(html: str) -> dict:
     tag = soup.find('div', {'id': 'mesh-terms'})
     data['mesh-terms']: list = parse_mesh_terms(tag)
     return data
+
+

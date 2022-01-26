@@ -3,8 +3,6 @@
 *.swo
 .idea
 
-pubmed_scraper/sync.py
-pubmed_scraper/utils.py
 pubmed_scraper/html_pages/
 
 pubmed_scraper/__pycache__
