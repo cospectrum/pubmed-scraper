@@ -2,6 +2,11 @@
 
 Scrape PubMed without an API.
 
+## Install
+
+```sh
+pip install git+https://github.com/cospectrum/pubmed-scraper.git
+```
 
 ## Usage
 

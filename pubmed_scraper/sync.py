@@ -15,16 +15,19 @@ from requests import (
 )
 
 
-def get_response(
+def get_response_text(
     url: str, 
     session: Optional[Session] = None,
     **kwargs: Any
-) -> Response:
+) -> str:
     if session is None:
         session = Session()
     if 'headers' not in kwargs:
         kwargs['headers'] = get_default_headers()
-    return session.get(url, **kwargs)
+    response: Response = session.get(url, **kwargs)
+    if response.status_code == 200:
+        return response.text
+    return ''
 
 
 def get_search_page(
@@ -34,10 +37,8 @@ def get_search_page(
     **kwargs: Any
 ) -> Optional[dict]:
     url = f'https://pubmed.ncbi.nlm.nih.gov/?term={term}&page={page}'
-    response: Response = get_response(url=url, session=session, **kwargs)
-    if response.status_code != 200:
-        return None
-    return parse_search_page(response.text)
+    response_text: str = get_response_text(url=url, session=session, **kwargs)
+    return parse_search_page(response_text)
 
 
 def get_article(
@@ -46,8 +47,6 @@ def get_article(
     **kwargs: Any
 ) -> Optional[dict]:
     url = f'https://pubmed.ncbi.nlm.nih.gov/{pmid}/'
-    response: Response = get_response(url=url, session=session, **kwargs)
-    if response.status_code != 200:
-        return None
-    return parse_article_page(response.text)
+    response_text: str = get_response_text(url=url, session=session, **kwargs)
+    return parse_article_page(response_text)
 

@@ -1,8 +1,17 @@
-/venv
+venv
+devenv
 
+*.egg-info
 *.swo
 .idea
 
-pubmed_scraper/html_pages/
-
 pubmed_scraper/__pycache__
+
+pubmed_scraper/async.py
+pubmed_scraper/tests
+
+
+tests
+requirements-dev.txt
+
+__init__.py

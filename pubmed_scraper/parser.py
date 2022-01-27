@@ -72,10 +72,12 @@ def parse_search_page(html: str) -> dict:
         'total-pages': 0,
         'articles': [],
     }
+    if not html:
+        return data
     soup = BeautifulSoup(html, 'html.parser')
     search_results: Optional[Tag] = soup.find('div', {'id': 'search-results'})
     if search_results is None:
-        return dict()
+        return data
     table_head = search_results.find('div', {'class': 'top-wrapper'})
     data['results-amount']: int = parse_results_amount(table_head)
     data['total-pages']: int = parse_total_pages(table_head)
@@ -89,8 +91,6 @@ def parse_search_page(html: str) -> dict:
 
 
 def parse_article_head(head: Optional[Tag]) -> dict:
-    if head is None:
-        return dict() 
     data = {
         'publication-type': '',
         'journal': '',
@@ -100,6 +100,8 @@ def parse_article_head(head: Optional[Tag]) -> dict:
         'title': '',
         'authors': [],
     }
+    if head is None:
+        return data
     publication_type = head.find('div', {'id': 'publication-type'})
     if publication_type is not None:
         data['publication-type'] = publication_type.text.strip()
@@ -250,9 +252,11 @@ def parse_mesh_terms(tag: Optional[Tag]) -> list:
 
 def parse_article_page(html: str) -> dict:
     soup = BeautifulSoup(html, 'html.parser')
-    soup: Tag = soup.find('main', {'id': 'article-details'})
+    head = None
     
-    head = soup.find('header', {'id': 'heading'})
+    main_tag: Optional[Tag] = soup.find('main', {'id': 'article-details'})
+    if main_tag is not None:
+        head = main_tag.find('header', {'id': 'heading'})
     data: dict = parse_article_head(head)
 
     abstract_div = soup.find('div', {'id': 'abstract'})
