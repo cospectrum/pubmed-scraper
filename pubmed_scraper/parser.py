@@ -243,7 +243,7 @@ def parse_mesh_terms(tag: Optional[Tag]) -> list:
     buttons = (
         tag.find('button') for tag in keywords_list
     )
-    data: list[str] = [
+    data: list = [
         button.text.strip() 
         for button in buttons if button is not None
     ]

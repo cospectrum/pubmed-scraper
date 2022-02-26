@@ -6,12 +6,12 @@ devenv
 .idea
 
 pubmed_scraper/__pycache__
+pubmed_scraper/aio.py
 
-pubmed_scraper/async.py
-pubmed_scraper/tests
+my_tests
 
-
-tests
-requirements-dev.txt
+.pytest_cache
+tests/__pycache__
+tests/.pytest_cache
 
 __init__.py

@@ -11,7 +11,7 @@ with open('requirements.txt', 'r') as f:
 
 setup(
     name='pubmed-scraper',
-    version='0.1.0',
+    version='0.1.1',
     license='MIT',
     url=URL,
     description='PubMed scraper',
