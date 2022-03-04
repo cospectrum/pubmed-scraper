@@ -6,7 +6,6 @@ devenv
 .idea
 
 pubmed_scraper/__pycache__
-pubmed_scraper/aio.py
 
 my_tests
 

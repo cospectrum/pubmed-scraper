@@ -1,9 +1,13 @@
-from typing import Optional
-
-from bs4 import (
-    BeautifulSoup,
-    Tag,
+import bs4
+from bs4 import BeautifulSoup
+from typing import Optional, Union
+from .filters import (
+    filter_authors,
+    filter_cite,
+    filter_linkout_category,
 )
+
+Tag = Union[BeautifulSoup, bs4.Tag]
 
 
 def parse_int(string: str) -> int:
@@ -136,18 +140,15 @@ def parse_article_head(head: Optional[Tag]) -> dict:
 def parse_articles_list(tag: Optional[Tag]) -> list:
     if tag is None:
         return [] 
+
     def parse_authors(article: Tag) -> str:
-        f_author = lambda x: x.name == 'span' and 'full-authors' in x.get('class', {})
-        tag = article.find(f_author)
+        tag = article.find(filter_authors)
         if tag is None:
             return ''
         return tag.text
+
     def parse_cite(article: Tag) -> str:
-        f_cite = lambda x: x.name == 'span' and (
-            'docsum-journal-citation' in x.get('class', {}) or 
-            'full-journal-citation' in x.get('class', {})
-        )
-        tag = article.find(f_cite)
+        tag = article.find(filter_cite)
         if tag is None:
             return ''
         return tag.text
@@ -168,6 +169,7 @@ def parse_references(tag: Optional[Tag]) -> list:
     if tag is None:
         return []
     references = tag.find_all('li', {'class': 'skip-numbering'})
+
     def parse_text(tag: Tag) -> str:
         children = tag.children
         try:
@@ -182,6 +184,7 @@ def parse_references(tag: Optional[Tag]) -> list:
             right_chars = ''.join(chars[rindex + 1:])
             text = f'{left_chars} -{right_chars}'
         return f'{text} {right_text}'.rstrip()
+
     def parse_href(tag: Tag) -> list:
         all_links = tag.find_all('a')
         links = [link.get('href', '') for link in all_links]
@@ -197,8 +200,7 @@ def parse_references(tag: Optional[Tag]) -> list:
 
 
 def parse_linkout_category(tag: Tag) -> tuple:
-    f_category = lambda x: 'linkout-category' in x.get('class', {})
-    category: Optional[Tag] = tag.find(f_category)
+    category: Optional[Tag] = tag.find(filter_linkout_category)
     if category is None:
         return tuple()
     category: str = category.text.strip().lower().replace(' ', '-')
